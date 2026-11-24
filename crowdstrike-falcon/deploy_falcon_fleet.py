@@ -37,10 +37,11 @@ Requirements:
   pip install boto3
 
 Usage:
-  # Target instances by tag (recommended)
+  # Target instances by tag (recommended). Validate on a non-prod tag
+  # like Environment=staging before you ever point this at prod.
   python3 deploy_falcon_fleet.py --platform linux \\
       --secret-id crowdstrike/falcon-api \\
-      --tag Environment=prod --region us-east-1
+      --tag Environment=staging --region us-east-1
 
   # Target specific instance IDs
   python3 deploy_falcon_fleet.py --platform windows \\
@@ -59,7 +60,7 @@ import argparse
 # Raw installer URLs. Point these at your fork/branch, or override with
 # --script-url to serve from a private S3 presigned URL instead.
 REPO_RAW_BASE = (
-    "https://raw.githubusercontent.com/slashroot305/sysops-scripts/"
+    "https://raw.githubusercontent.com/slashroot305/secops-scripts/"
     "main/crowdstrike-falcon"
 )
 DEFAULT_SCRIPT_URLS = {
