@@ -91,12 +91,14 @@ Scope each instance's role to *just* this secret — never `Resource: "*"`:
   "Statement": [{
     "Effect": "Allow",
     "Action": "secretsmanager:GetSecretValue",
-    "Resource": "arn:aws:secretsmanager:us-east-1:<ACCOUNT_ID>:secret:crowdstrike/falcon-api-*"
+    "Resource": "arn:aws:secretsmanager:<region>:<ACCOUNT_ID>:secret:crowdstrike/falcon-api-*"
   }]
 }
 ```
 
 > **Why scope the ARN so tightly?** If these keys ever leak, a narrow policy means the blast radius is this one secret — not every secret in the account. "Least privilege" isn't a slogan; it's literally *how small you can make that `Resource` line*. Same instinct as the dedicated user above, applied to data instead of identity.
+>
+> **Watch the `<region>`.** A Secrets Manager secret lives in one region, so this ARN only matches a secret in *that* region. The region here, the region your instances run in, and the `--region` you pass the deploy script must all be the same — otherwise the instance looks in the wrong region, finds nothing, and you get a baffling `AccessDenied`. Region mismatches are one of the most common "why doesn't this work" moments in AWS.
 
 To rotate later, `put-secret-value` a new version onto the same secret — the new value becomes `AWSCURRENT`, the old stays `AWSPREVIOUS` so you can roll back, and the next deploy picks it up with no code change.
 
@@ -158,7 +160,7 @@ You get a `PASS`/`FAIL` line per instance, with failing output inline so you can
 
 > **Why staging before prod?** A fleet command runs on every matching box at once — a wrong tag or region could hit machines you didn't mean to. Proving it on a throwaway `staging` tag first means a mistake costs you a test box, not production. Combined with `--dry-run`, that's two cheap habits that turn "oops, I just ran that on prod" into a non-event. Look before you leap, then leap somewhere safe first.
 
-**Prerequisites:** target instances are SSM-managed nodes (SSM Agent running + `AmazonSSMManagedInstanceCore` on the instance profile), their roles carry the secret-read policy above, and `pip install boto3` where you run the script.
+**Prerequisites:** target instances are SSM-managed nodes (SSM Agent running + `AmazonSSMManagedInstanceCore` on the instance profile), their roles carry the secret-read policy above, and `pip install boto3` where you run the script. (`us-east-1` throughout these examples is just a stand-in — use your own region, and the *same* one everywhere per the note above.)
 
 ### The installers it runs
 
